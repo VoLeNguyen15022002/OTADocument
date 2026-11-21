@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flash Bootloader (FBL) — Tài Liệu Tổng Hợp Kỹ Thuật</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-2: #1c222b;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-soft: rgba(88, 166, 255, 0.12);
+      --green: #3fb950;
+      --amber: #d29922;
+      --red: #f85149;
+      --code-bg: #0b0f14;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 18px;
+    }
+
+    .brand {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+    .brand-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    nav a:hover {
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+
+    main {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 44px 80px;
+    }
+
+    header.hero {
+      background: linear-gradient(135deg, #161b22 0%, #1b2432 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 36px;
+    }
+    header.hero h1 {
+      margin: 0 0 10px;
+      font-size: 2rem;
+      line-height: 1.25;
+    }
+    header.hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .badge {
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      font-weight: 600;
+    }
+
+    section {
+      margin-bottom: 42px;
+      scroll-margin-top: 24px;
+    }
+    h2 {
+      font-size: 1.45rem;
+      margin: 0 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      color: #ffffff;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin: 22px 0 10px;
+      color: var(--accent);
+    }
+
+    ul, ol { padding-left: 22px; }
+    li { margin-bottom: 6px; }
+
+    .callout {
+      background: var(--surface);
+      border-left: 4px solid var(--accent);
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+    }
+    .callout.warn { border-left-color: var(--amber); }
+    .callout.danger { border-left-color: var(--red); }
+    .callout.ok { border-left-color: var(--green); }
+    .callout strong.title {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #d2e0f0;
+    }
+    code {
+      font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+      font-size: 0.88em;
+      background: rgba(110, 118, 129, 0.22);
+      padding: 2px 6px;
+      border-radius: 5px;
+    }
+    pre code {
+      background: transparent;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      font-size: 0.93rem;
+    }
+    th, td {
+      padding: 11px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    th {
+      background: var(--surface-2);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    footer {
+      margin-top: 56px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-align: center;
+    }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      main { padding: 24px 18px 60px; }
+    }
+
+    @media print {
+      body { background: #fff; color: #111; }
+      aside { display: none; }
+      .layout { display: block; }
+      main { max-width: 100%; padding: 0; }
+      pre, table, .callout, header.hero {
+        background: #f6f8fa !important;
+        color: #111 !important;
+        border-color: #d0d7de !important;
+      }
+      h2, h3, th { color: #111 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">Flash Bootloader Guide</div>
+      <div class="brand-sub">ARM Cortex-M &amp; Automotive FBL (AURIX TC397 / UDS)</div>
+      <nav>
+        <a href="#sec-1">1. Ràng buộc bộ nhớ Flash</a>
+        <a href="#sec-2">2. Memory Layout &amp; Boot Sequence</a>
+        <a href="#sec-3">3. Quy trình Jump-to-App</a>
+        <a href="#sec-4">4. Giao thức UDS &amp; CanTp</a>
+        <a href="#sec-5">5. Mất điện, Toàn vẹn &amp; Rollback</a>
+        <a href="#sec-6">6. Secure Boot &amp; HSM</a>
+        <a href="#sec-7">7. Bảng tra cứu lỗi thực tế</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <h1>Flash Bootloader (FBL) — Tài Liệu Tổng Hợp Kỹ Thuật</h1>
+        <p>Tài liệu cô đọng, thực chiến về thiết kế và gỡ lỗi Flash Bootloader trên vi điều khiển nhúng &amp; ECU ô tô: từ phần cứng Flash, linker script, vector table, UDS/CanTp, cho đến Dual-Bank rollback và Secure Boot bằng HSM.</p>
+        <div class="badges">
+          <span class="badge">ARM Cortex-M</span>
+          <span class="badge">AURIX TC397</span>
+          <span class="badge">ISO 14229 UDS</span>
+          <span class="badge">ISO 15765-2 CanTp</span>
+          <span class="badge">Dual-Bank OTA</span>
+          <span class="badge">Secure Boot / HSM</span>
+        </div>
+      </header>
+
+      <section id="sec-1">
+        <h2>1. Ràng buộc phần cứng bộ nhớ Flash</h2>
+
+        <h3>1.1 Erase-before-Write, Độ mịn Xóa/Ghi &amp; ECC</h3>
+        <ul>
+          <li>Flash <strong>không cho ghi đè trực tiếp</strong> từng byte như RAM — phải xóa về <code>0xFF</code> trước khi ghi mới.</li>
+          <li><strong>Erase Sector</strong> luôn lớn hơn nhiều so với <strong>Write Page / Phrase</strong> (ví dụ sector <code>16 KB</code>, page <code>32 byte</code> có ECC). Để nạp App <code>50 KB</code> cần xóa tối thiểu <strong>4 sector = 64 KB</strong>.</li>
+          <li><strong>Padding &amp; ECC:</strong> Mảnh cuối lẻ (ví dụ <code>10 byte</code>) phải đệm (pad) thêm <code>22 byte</code> (thường bằng <code>0xFF</code>) trong buffer để ghi đủ nguyên page <code>32 byte</code>. Ghi đè 2 lần vào cùng page chưa xóa trên Flash có ECC sẽ gây lỗi ECC ngay lập tức.</li>
+        </ul>
+
+        <h3>1.2 Same-Bank RWW &amp; HIS Flash Driver trên RAM</h3>
+        <ul>
+          <li>Một bank Flash vật lý <strong>không thể vừa xóa/ghi vừa phục vụ instruction fetch</strong> trên cùng bank đó.</li>
+          <li>Trên MCU multi-bank (như <strong>TC397</strong> có <code>PF0</code>–<code>PF5</code>), CPU chạy ở <code>PF0</code> có thể xóa <code>PF1</code>; nhưng trên <strong>single-bank</strong> hoặc xóa <strong>cùng bank</strong>, chạy hàm xóa từ Flash sẽ gây đứng CPU / <strong>BusFault</strong>.</li>
+          <li><strong>Giải pháp (HIS Flash Driver):</strong> Tải và chạy Flash Driver từ <strong>RAM</strong> (<code>SRAM</code> / <code>PSPR</code>):
+            <ol>
+              <li><em>Lợi ích phần cứng:</em> CPU fetch lệnh từ RAM, không đụng bank Flash đang bận.</li>
+              <li><em>Lợi ích an toàn:</em> Flash Driver không tồn tại trong Flash lúc xe chạy ngoài đường, ngăn code lỗi (runaway code) vô tình xóa firmware ECU.</li>
+            </ol>
+          </li>
+        </ul>
+
+        <div class="callout warn">
+          <strong class="title">Cảnh báo về Read-Modify-Write qua RAM</strong>
+          Đọc sector <code>16 KB</code> ra RAM → sửa <code>1 byte</code> → xóa sector → ghi lại sẽ <strong>mất trắng toàn bộ 16 KB</strong> nếu rút ắc quy đúng lúc vừa xóa xong (kể cả Retention RAM cũng mất khi mất nguồn chính). Với dữ liệu metadata quan trọng, phải dùng <strong>2 sector Flash (Ping-Pong / A-B)</strong>.
+        </div>
+      </section>
+
+      <section id="sec-2">
+        <h2>2. Memory Layout &amp; Chuỗi khởi động (Boot Sequence)</h2>
+
+        <h3>2.1 Phần cứng làm gì khi Reset (Cortex-M)</h3>
+        <table>
+          <thead>
+            <tr><th>Địa chỉ đầu Flash</th><th>Ví dụ</th><th>Hành động phần cứng CPU</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>0x08000000</code></td><td><code>0x20005000</code></td><td>Nạp vào <code>MSP</code> (Main Stack Pointer — đỉnh stack trong SRAM)</td></tr>
+            <tr><td><code>0x08000004</code></td><td><code>0x08000199</code></td><td>Nạp vào <code>PC</code> (Reset Vector — địa chỉ <code>Reset_Handler</code>, bit 0 = 1 cho Thumb)</td></tr>
+          </tbody>
+        </table>
+
+        <pre><code>POR / Soft Reset
+  ├─► Hardware đọc MSP tại 0x08000000
+  ├─► Hardware đọc Reset Vector tại 0x08000004 → nạp PC
+  ├─► Reset_Handler: copy .data (Flash → RAM), zero .bss, gọi SystemInit() (clock)
+  └─► main() của FBL bắt đầu chạy</code></pre>
+
+        <div class="callout danger">
+          <strong class="title">Tại sao xóa nhầm Sector 0 làm ECU bị Brick?</strong>
+          Flash vừa xóa chứa toàn <code>0xFF</code> → CPU đọc <code>MSP = 0xFFFFFFFF</code> và <code>PC = 0xFFFFFFFF</code> → fault ngay lập tức, mà HardFault vector cũng là <code>0xFFFFFFFF</code> → CPU rơi vào <strong>Lockup</strong>. Chỉ cứu được bằng BootROM (<code>BOOT0</code>) hoặc nạp lại qua SWD/JTAG/DAP.
+        </div>
+
+        <h3>2.2 Linker Script &amp; Shared <code>noinit</code> RAM</h3>
+        <pre><code>/* Ví dụ: Flash 256 KB (FBL 32 KB, App 224 KB), RAM 64 KB (Shared noinit 16 byte cuối RAM) */
+MEMORY
+{
+  FLASH       (rx)  : ORIGIN = 0x08008000, LENGTH = 224K
+  RAM         (xrw) : ORIGIN = 0x20000000, LENGTH = 0xFFF0
+  SHARED_RAM  (rw)  : ORIGIN = 0x2000FFF0, LENGTH = 16
+}</code></pre>
+
+        <ul>
+          <li><strong>Phải rebuild App với Linker Script mới:</strong> Nạp file <code>.bin</code> cũ (build cho <code>0x08000000</code>) vào <code>0x08008000</code> sẽ khiến mọi địa chỉ tuyệt đối nhảy ngược vào vùng FBL.</li>
+          <li><strong>FBL không "sleep" trong RAM:</strong> App được dùng gần như toàn bộ RAM (<code>64 KB − 16 byte = 0xFFF0</code>). Khi cần vào FBL (<code>10 02</code>), App ghi magic flag vào vùng <code>noinit</code> RAM rồi gọi <strong>Soft Reset</strong>; FBL đọc xong phải xóa cờ ngay.</li>
+          <li><strong>Bảo vệ Sector 0 phải bằng phần cứng:</strong> Linker script không có tác dụng lúc runtime. Phải khóa bằng <strong>WRP + khóa vĩnh viễn (OTP / RDP Level 2)</strong> hoặc tách quyền bằng <strong>HSM / TrustZone</strong>.</li>
+        </ul>
+      </section>
+
+      <section id="sec-3">
+        <h2>3. Quy trình nhảy từ FBL sang Application (Jump-to-App)</h2>
+        <p>Sau khi xác nhận App hợp lệ (Valid flag / CRC / CMAC và <code>app_sp</code> hợp lệ trong SRAM), thực hiện <strong>đúng thứ tự</strong>:</p>
+        <ol>
+          <li><strong><code>__disable_irq()</code> đầu tiên</strong> — khóa ngắt toàn cục để không ngắt nào xen ngang.</li>
+          <li><strong>Dừng <code>SysTick</code>, tắt &amp; xóa cờ pending <code>NVIC</code> (<code>ICER</code>/<code>ICPR</code>), de-init ngoại vi &amp; trả clock về HSI</strong> — tránh ngắt sót từ FBL và tránh treo PLL trong <code>SystemInit()</code> của App.</li>
+          <li><strong>Cập nhật <code>SCB-&gt;VTOR = APP_ADDR</code></strong> (kèm <code>__DSB(); __ISB();</code>) — trỏ bảng vector ngắt sang của App.</li>
+          <li><strong>Cập nhật <code>MSP = app_sp</code> rồi nhảy ngay sang <code>app_reset</code></strong> (nên viết bằng inline assembly để không đọc biến từ stack sau khi vừa đổi <code>MSP</code>).</li>
+          <li><strong>App tự gọi <code>__enable_irq()</code></strong> sau khi khởi tạo xong vì <code>PRIMASK</code> vẫn giữ trạng thái tắt sau cú nhảy.</li>
+        </ol>
+
+        <pre><code>#define APP_ADDR 0x08008000UL
+
+__attribute__((noreturn))
+void fbl_jump_to_app(void)
+{
+    uint32_t app_sp    = *(volatile uint32_t *)(APP_ADDR);
+    uint32_t app_reset = *(volatile uint32_t *)(APP_ADDR + 4UL);
+
+    __disable_irq();
+
+    SysTick-&gt;CTRL = 0;
+    SysTick-&gt;LOAD = 0;
+    SysTick-&gt;VAL  = 0;
+
+    for (uint32_t i = 0; i &lt; 8; i++) {
+        NVIC-&gt;ICER[i] = 0xFFFFFFFFUL;
+        NVIC-&gt;ICPR[i] = 0xFFFFFFFFUL;
+    }
+
+    fbl_deinit_peripherals_and_clock();
+
+    SCB-&gt;VTOR = APP_ADDR;
+    __DSB();
+    __ISB();
+
+    __asm volatile (
+        "msr msp, %0 \n"
+        "bx  %1      \n"
+        : : "r" (app_sp), "r" (app_reset) : "memory"
+    );
+    for (;;) {}
+}</code></pre>
+      </section>
+
+      <section id="sec-4">
+        <h2>4. Giao thức nạp Firmware (UDS ISO 14229 &amp; CanTp ISO 15765-2)</h2>
+        <p><strong>CanTp (ISO-TP)</strong> phân mảnh gói tin lớn qua khung CAN 8 byte (hoặc CAN-FD 64 byte) với cơ chế Flow Control. Chuỗi dịch vụ UDS tiêu chuẩn:</p>
+
+        <table>
+          <thead>
+            <tr><th>Bước</th><th>Service ID</th><th>Tên dịch vụ</th><th>Vai trò</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>10 03</code></td><td>Extended Session</td><td>Vào phiên mở rộng trên App</td></tr>
+            <tr><td>2</td><td><code>27</code></td><td>Security Access</td><td>Mở khóa Seed/Key (nếu cần trên App)</td></tr>
+            <tr><td>3</td><td><code>28</code></td><td>Communication Control</td><td>Tắt lưu lượng CAN bình thường</td></tr>
+            <tr><td>4</td><td><code>85</code></td><td>Control DTC Setting</td><td>Tắt ghi nhận mã lỗi DTC</td></tr>
+            <tr><td>5</td><td><code>10 02</code></td><td>Programming Session</td><td>Ghi cờ <code>noinit</code> RAM → Soft Reset vào FBL</td></tr>
+            <tr><td>6</td><td><code>27</code></td><td>Security Access (FBL)</td><td>Xác thực quyền nạp trong FBL</td></tr>
+            <tr><td>7</td><td><code>31</code></td><td>Routine Control (Erase)</td><td>Xóa các sector Flash vùng App</td></tr>
+            <tr><td>8</td><td><code>34</code></td><td>Request Download</td><td>Khai báo địa chỉ đích &amp; dung lượng</td></tr>
+            <tr><td>9</td><td><code>36</code></td><td>Transfer Data</td><td>Truyền từng block kèm Block Sequence Counter (BSC)</td></tr>
+            <tr><td>10</td><td><code>37</code></td><td>Request Transfer Exit</td><td>Kết thúc truyền dữ liệu</td></tr>
+            <tr><td>11</td><td><code>31</code></td><td>Routine Control (Check)</td><td>Kiểm tra CRC, chữ ký, chống downgrade, đánh dấu hợp lệ</td></tr>
+            <tr><td>12</td><td><code>11</code></td><td>ECU Reset</td><td>Reset sang App mới</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout ok">
+          <strong class="title">2 quy tắc vàng xử lý sự cố UDS</strong>
+          <ul>
+            <li><strong>Timeout khi xóa/ghi Flash:</strong> FBL trả <code>NRC 0x78</code> (Response Pending) để chuyển sang bộ đếm <code>P2*</code> (kèm <code>3E 80</code> Tester Present).</li>
+            <li><strong>Retry trùng BSC ở dịch vụ <code>36</code>:</strong> Nếu block đó đã ghi xong trước đó, <strong>KHÔNG ghi đè lại vào Flash</strong> — trả thẳng Positive Response (<code>76 &lt;BSC&gt;</code>). Nếu BSC nhảy sai thứ tự, trả <code>NRC 0x73</code>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="sec-5">
+        <h2>5. An toàn mất điện, toàn vẹn dữ liệu &amp; Rollback</h2>
+        <table>
+          <thead>
+            <tr><th>Mô hình</th><th>Mất điện giữa chừng (50%)</th><th>Ứng dụng thực tế</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Single-Bank</strong> (1 FBL + 1 App)</td>
+              <td>App hỏng nhưng <strong>không brick</strong>: FBL vẫn nguyên vẹn, từ chối nhảy App và đứng chờ nạp lại qua UDS</td>
+              <td>Nạp tại xưởng dịch vụ / nhà máy</td>
+            </tr>
+            <tr>
+              <td><strong>Dual-Bank</strong> (1 FBL + Bank A + Bank B)</td>
+              <td>Tự boot lại <strong>Bank cũ bình thường</strong></td>
+              <td><strong>OTA</strong> ngoài đường</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Metadata nguyên tử &amp; Cơ chế Trial / Confirm Rollback</h3>
+        <ul>
+          <li><strong>3 trường metadata bắt buộc:</strong> <code>SW Version / Sequence Counter</code> (chọn bản mới hơn khi cả A và B hợp lệ) + <code>CRC / SHA-256</code> (phát hiện sai dù 1 bit) + <code>Valid/Commit Flag</code> (ghi ở bước cuối cùng).</li>
+          <li><strong>Trial &amp; Confirm:</strong> Khi boot bản mới Bank B lần đầu, FBL đặt trạng thái <code>TRIAL / PENDING</code> kèm bộ đếm thử (ví dụ <code>max_tries = 3</code>). Nếu Bank B crash và Watchdog reset liên tục về <code>0</code>, FBL tự rollback về Bank A. Chỉ <strong>chính App ở Bank B</strong> sau khi tự kiểm tra ổn định mới ghi cờ <code>CONFIRMED</code>.</li>
+        </ul>
+      </section>
+
+      <section id="sec-6">
+        <h2>6. Secure Boot, Chữ ký số &amp; HSM</h2>
+        <table>
+          <thead>
+            <tr><th>Cơ chế</th><th>Đảm bảo thuộc tính</th><th>Bắt buộc chống chạy code giả?</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Chữ ký số (RSA / ECDSA + SHA-256)</strong></td><td>Authenticity &amp; Integrity</td><td><strong>BẮT BUỘC</strong></td></tr>
+            <tr><td><strong>Mã hóa (AES)</strong></td><td>Confidentiality (bảo mật IP)</td><td>Tùy chọn</td></tr>
+          </tbody>
+        </table>
+
+        <ul>
+          <li><strong>Public Key trên ECU:</strong> Private Key giữ offline tại server OEM; ECU chỉ lưu Public Key (lộ Public Key cũng không ký giả được). Không dùng chung Symmetric Key trên mọi xe.</li>
+          <li><strong>Anti-Rollback (Chống hạ cấp):</strong> Chữ ký số không chặn được bản v1.0 thật cũ có lỗ hổng → phải dùng <strong>Security Counter</strong> tăng một chiều lưu trong <strong>HSM DFLASH / OTP / eFuse</strong>.</li>
+          <li><strong>Secure Boot mỗi lần bật nguồn (HSM CMAC):</strong> Ngăn sửa Flash trực tiếp không qua UDS (debugger/exploit). Lúc nạp UDS kiểm tra chữ ký số rồi HSM lưu <strong>Golden CMAC</strong>; mỗi lần boot HSM tính lại CMAC rất nhanh để đối chiếu trước khi cho chạy App.</li>
+        </ul>
+      </section>
+
+      <section id="sec-7">
+        <h2>7. Bảng tra cứu nhanh các lỗi thực tế hay gặp</h2>
+        <table>
+          <thead>
+            <tr><th>Triệu chứng</th><th>Nguyên nhân gốc</th><th>Cách khắc phục</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Polling chạy tốt, vừa nổ ngắt đầu tiên là crash / nhảy về FBL</td><td>Quên cập nhật <code>SCB-&gt;VTOR = APP_ADDR</code></td><td>Cập nhật <code>SCB-&gt;VTOR</code> + barrier trước khi nhảy</td></tr>
+            <tr><td>Đứng / BusFault khi chạy UDS <code>31</code> Erase trên single-bank</td><td>CPU fetch lệnh từ chính bank Flash đang xóa</td><td>Chạy <strong>Flash Driver từ RAM</strong></td></tr>
+            <tr><td>App vào <code>main()</code> nhưng không có ngắt nào nổ</td><td>FBL đã <code>__disable_irq()</code>, App quên bật lại</td><td>Gọi <code>__enable_irq()</code> sau khi App init xong</td></tr>
+            <tr><td><code>SystemInit()</code> treo khi cấu hình PLL</td><td>FBL chưa trả clock về mặc định trước khi nhảy</td><td>De-init ngoại vi &amp; trả clock về HSI trong FBL</td></tr>
+            <tr><td>Lỗi ECC khi retry gói <code>36</code> trùng BSC</td><td>Ghi đè lại block cũ xuống Flash</td><td>Bỏ qua payload trùng, trả thẳng <code>76 &lt;BSC&gt;</code></td></tr>
+            <tr><td>ECU brick hoàn toàn sau lỗi con trỏ xóa sector 0</td><td>Sector 0 về <code>0xFF</code> (<code>SP</code>/<code>PC = 0xFFFFFFFF</code> → Lockup)</td><td>Khóa phần cứng <strong>WRP + OTP / RDP2 / HSM</strong></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <footer>
+        Tài liệu tổng hợp qua phiên học Socratic Tutor • Flash Bootloader (FBL)
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
